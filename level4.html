@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ด่านที่ 4 แล้วนะออเจ้า!!!</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000014;
+      color: #00ffff;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    h1 {
+      color: #ff00ff;
+      text-shadow: 0 0 10px #ff00ff;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 20px 0;
+      box-shadow: 0 0 50px #00ffff;
+      transition: box-shadow 1s ease;
+    }
+
+    table.correct-glow {
+      box-shadow: 0 0 40px 8px gold;
+    }
+
+    td {
+      border: 1px solid #00ffff;
+      width: 40px;
+      height: 40px;
+      text-align: center;
+      vertical-align: middle;
+      padding: 0;
+      transition: border-color 0.5s ease;
+    }
+
+    input {
+      width: 30px;
+      height: 35px;
+      text-align: center;
+      font-size: 20px;
+      background: transparent;
+      color: #00ffff;
+      font-weight: bold;
+      border: none;
+      outline: none;
+      text-shadow: 0 0 6px #00ffff;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    input:disabled {
+      color: #66ffff;
+      text-shadow: 0 0 20px #66ffff;
+      cursor: default;
+    }
+
+    .thick-border-top {
+      border-top: 3px solid #00ffff;
+    }
+
+    .thick-border-left {
+      border-left: 3px solid #00ffff;
+    }
+
+    .button {
+      padding: 10px 20px;
+      background-color: #00ffff;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 15px #00ffff;
+      margin: 10px;
+      transition: opacity 0.5s ease;
+    }
+
+    .button:hover:not(:disabled) {
+      background-color: #00cccc;
+      box-shadow: 0 0 25px #00ffff;
+    }
+
+    .button:disabled {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .message {
+      margin-top: 10px;
+      font-size: 18px;
+      color: #00ff99;
+      text-shadow: 0 0 8px #00ff99;
+      min-height: 24px;
+    }
+
+    .correct {
+      background-color: #00ff88;
+      box-shadow: 0 0 10px #00ff88;
+      color: #000 !important;
+      transition: background-color 0.5s ease;
+    }
+
+    .incorrect {
+      background-color: #ff4444;
+      box-shadow: 0 0 10px red;
+      color: #000 !important;
+      transition: background-color 0.5s ease;
+    }
+
+    .error-border {
+      border: 2px solid red !important;
+      box-shadow: 0 0 10px red;
+      transition: border-color 0.5s ease;
+    }
+
+    #next-level-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      background: #000014dd;
+      padding: 20px 40px;
+      border-radius: 12px;
+      box-shadow: 0 0 40px 10px gold;
+      z-index: 1000;
+      animation: fadeIn 1s forwards;
+    }
+
+    #next-level-button {
+      margin-top: 15px;
+      padding: 12px 30px;
+      font-size: 18px;
+      font-weight: bold;
+      background: gold;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 15px gold;
+      transition: background-color 0.3s ease;
+    }
+
+    #next-level-button:hover {
+      background-color: #e6c200;
+      box-shadow: 0 0 30px gold;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0;}
+      to {opacity: 1;}
+    }
+  </style>
+</head>
+<body>
+  <h1>Level 4</h1>
+  <p>อย่าเผลอไปกดตรวจคำตอบตอนที่ใส่คำตอบยังไม่ครบนะ 🫣</p>
+  <table id="sudoku-board"></table>
+  <button class="button" id="check-btn" onclick="checkSolution()">ตรวจคำตอบ</button>
+  <div class="message" id="message"></div>
+
+  <div id="next-level-container">
+    <div style="color: gold; font-size: 24px; font-weight: bold; text-shadow: 0 0 10px gold;">
+      เห้ยยยยผ่านแล้ววว🥳🎉
+    </div>
+    <button id="next-level-button" onclick="goToNextLevel()">ด่านถัดไป</button>
+  </div>
+
+  <script>
+    const originalPuzzle = [
+      [5, 3, null, null, 7, null, null, null, null],
+      [6, null, null, 1, 9, 5, null, null, null],
+      [null, 9, 8, null, null, null, null, 6, null],
+      [8, null, null, null, 6, null, null, null, 3],
+      [4, null, null, 8, null, 3, null, null, 1],
+      [7, null, null, null, 2, null, null, null, 6],
+      [null, 6, null, null, null, null, 2, 8, null],
+      [null, null, null, 4, 1, 9, null, null, 5],
+      [null, null, null, null, 8, null, null, 7, 9]
+    ];
+
+    let inputs = [];
+    let locked = false;
+
+    function createBoard() {
+      const table = document.getElementById("sudoku-board");
+      table.innerHTML = "";
+      inputs = [];
+
+      for (let row = 0; row < 9; row++) {
+        const tr = document.createElement("tr");
+        inputs[row] = [];
+
+        for (let col = 0; col < 9; col++) {
+          const td = document.createElement("td");
+
+          if (row % 3 === 0) td.classList.add("thick-border-top");
+          if (col % 3 === 0) td.classList.add("thick-border-left");
+
+          const input = document.createElement("input");
+          input.setAttribute("type", "text");
+          input.setAttribute("maxlength", "1");
+
+          if (originalPuzzle[row][col] !== null && originalPuzzle[row][col] !== undefined) {
+            input.value = originalPuzzle[row][col];
+            input.disabled = true;
+          } else {
+            input.value = "";
+            input.oninput = () => {
+              if (locked) {
+                input.value = ""; // prevent input when locked
+                return;
+              }
+              const val = input.value;
+              if (!/^[1-9]$/.test(val)) input.value = "";
+              input.classList.remove("correct", "incorrect", "error-border");
+            };
+          }
+
+          inputs[row][col] = input;
+          td.appendChild(input);
+          tr.appendChild(td);
+        }
+        table.appendChild(tr);
+      }
+      document.getElementById("message").textContent = "";
+      document.getElementById("next-level-container").style.display = "none";
+      document.getElementById("check-btn").disabled = false;
+      document.getElementById("sudoku-board").classList.remove("correct-glow");
+      locked = false;
+    }
+
+    function checkSolution() {
+      if (locked) return;
+
+      const grid = [];
+      let hasError = false;
+
+      for (let r = 0; r < 9; r++) {
+        grid[r] = [];
+        for (let c = 0; c < 9; c++) {
+          const val = parseInt(inputs[r][c].value);
+          grid[r][c] = isNaN(val) ? 0 : val;
+          inputs[r][c].classList.remove("correct", "incorrect", "error-border");
+          inputs[r][c].style.borderColor = "#00ffff";
+        }
+      }
+
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          const val = grid[r][c];
+          if (val === 0) {
+            markTemporary(inputs[r][c], "incorrect");
+            hasError = true;
+            continue;
+          }
+
+          for (let i = 0; i < 9; i++) {
+            if (i !== c && grid[r][i] === val) {
+              markTemporary(inputs[r][c], "incorrect");
+              hasError = true;
+            }
+            if (i !== r && grid[i][c] === val) {
+              markTemporary(inputs[r][c], "incorrect");
+              hasError = true;
+            }
+          }
+
+          const boxRow = Math.floor(r / 3) * 3;
+          const boxCol = Math.floor(c / 3) * 3;
+          for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+              const rr = boxRow + i;
+              const cc = boxCol + j;
+              if ((rr !== r || cc !== c) && grid[rr][cc] === val) {
+                markTemporary(inputs[r][c], "incorrect");
+                hasError = true;
+              }
+            }
+          }
+        }
+      }
+
+      const message = document.getElementById("message");
+
+      if (hasError) {
+        message.textContent = "มีบางช่องกรอกผิด! เริ่มใหม่...";
+        setTimeout(() => {
+          createBoard();
+          message.textContent = "";
+        }, 600);
+      } else {
+        message.textContent = "ถูกต้องทั้งหมด! 🎉 ยินดีด้วย!";
+        locked = true;
+        glowBoard();
+        disableInputs();
+
+        // ไฮไลต์ช่องถูก
+        for (let r = 0; r < 9; r++) {
+          for (let c = 0; c < 9; c++) {
+            if (!inputs[r][c].disabled) {
+              markTemporary(inputs[r][c], "correct");
+            }
+          }
+        }
+
+        // แสดงปุ่มด่านถัดไป
+        setTimeout(() => {
+          const nextContainer = document.getElementById("next-level-container");
+          nextContainer.style.display = "flex";
+        }, 500);
+      }
+    }
+
+    function markTemporary(input, className) {
+      input.classList.add(className);
+      setTimeout(() => {
+        input.classList.remove(className);
+      }, 700);
+    }
+
+    function glowBoard() {
+      const table = document.getElementById("sudoku-board");
+      table.classList.add("correct-glow");
+    }
+
+    function disableInputs() {
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          inputs[r][c].disabled = true;
+        }
+      }
+      document.getElementById("check-btn").disabled = true;
+    }
+
+    function goToNextLevel() {
+       const nextLevelUrl = "https://your-next-level-url.com"; // แก้เป็นลิงก์เป้าหมายที่ต้องการ
+       window.location.href = nextLevelUrl;
+    }
+
+    createBoard();
+  </script>
+</body>
+</html>
