@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>คำใบ้2</title>
+  <style>
+    body {
+      margin: 0;
+      background: radial-gradient(circle at center, #0a0a0a, #000000);
+      font-family: 'Arial', sans-serif;
+      overflow: hidden;
+      color: #0ff;
+    }
+
+    #startScreen {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, #000000, #050505);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 1s forwards;
+      z-index: 10;
+    }
+
+    #startScreen h1 {
+      font-size: 3.5em;
+      text-shadow: 0 0 20px #00ffff;
+      margin-bottom: 10px;
+    }
+
+    #startScreen p {
+      font-size: 1.3em;
+      max-width: 600px;
+      text-align: center;
+      margin-bottom: 40px;
+      color: #ccc;
+    }
+
+    #startGameBtn {
+      padding: 15px 30px;
+      font-size: 1.2em;
+      background: #00ffcc;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 15px #00ffee;
+      transition: 0.3s;
+    }
+
+    #startGameBtn:hover {
+      background: #00ffee;
+      box-shadow: 0 0 25px #00ffee;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    #mainGame {
+      opacity: 0;
+      transition: opacity 1s ease;
+      pointer-events: none;
+    }
+
+    #mainGame.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    h2 {
+      text-align: center;
+      margin-top: 15px;
+      color: #0ff;
+      text-shadow: 0 0 15px #0ff;
+    }
+
+    #scoreBoard {
+      text-align: center;
+      font-size: 1.5em;
+      color: #fff;
+      margin: 10px 0;
+    }
+
+    #scoreNumber {
+      font-size: 2.2em;
+      color: #ff0;
+      text-shadow: 0 0 10px #ff0;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background: #111;
+      border: 3px solid #0ff;
+      box-shadow: 0 0 15px #0ff;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-areas:
+        ". up ."
+        "left start right"
+        ". down .";
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .controls button {
+      width: 60px;
+      height: 60px;
+      font-size: 20px;
+      border: none;
+      border-radius: 10px;
+      background: #111;
+      color: #00ffee;
+      box-shadow: 0 0 10px #00ffee, 0 0 20px #00ffee inset;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .controls button:active {
+      transform: scale(0.95);
+    }
+
+    #startButton {
+      grid-area: start;
+      background: #0f0;
+      color: #000;
+      box-shadow: 0 0 15px #0f0, 0 0 25px #0f0 inset;
+    }
+
+    #nextLevelBtn {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 22px;
+      padding: 15px 30px;
+      color: #fff;
+      background: linear-gradient(45deg, #ffcc00, #ff6600);
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 0 20px #ffcc00;
+      z-index: 100;
+      cursor: pointer;
+    }
+
+    .flash {
+      animation: flashRed 0.4s;
+    }
+
+    .shake {
+      animation: shakeScreen 0.3s;
+    }
+
+    @keyframes flashRed {
+      0% { background-color: #ff0000; }
+      100% { background-color: #000000; }
+    }
+
+    @keyframes shakeScreen {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(4px, -4px); }
+      50% { transform: translate(-4px, 4px); }
+      75% { transform: translate(4px, 4px); }
+      100% { transform: translate(0, 0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="startScreen">
+    <h1>เกมงู้วววววว</h1>
+    <p>บังคับงูเพื่อกินอาหารให้ครบ 30 ชิ้น แล้วกินประตูทองเพื่อไปยังด่านถัดไป!</p>
+    <button id="startGameBtn" onclick="fadeIntoGame()">เริ่มเกม</button>
+  </div>
+
+  <div id="mainGame">
+    <h2>เกมงูนีออน</h2>
+    <div id="scoreBoard">คะแนน: <span id="scoreNumber">0</span></div>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div class="controls">
+      <button style="grid-area: up;" onclick="setDirection(0,-1)">↑</button>
+      <button style="grid-area: left;" onclick="setDirection(-1,0)">←</button>
+      <button id="startButton" onclick="startGame()">เริ่ม</button>
+      <button style="grid-area: right;" onclick="setDirection(1,0)">→</button>
+      <button style="grid-area: down;" onclick="setDirection(0,1)">↓</button>
+    </div>
+  </div>
+
+  <button id="nextLevelBtn" onclick="goToNextLevel()">ไปด่านถัดไป</button>
+
+  <script>
+    function fadeIntoGame() {
+      document.getElementById("startScreen").style.animation = "fadeOut 1s forwards";
+      setTimeout(() => {
+        document.getElementById("startScreen").style.display = "none";
+        document.getElementById("mainGame").classList.add("visible");
+      }, 1000);
+    }
+
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const box = 20;
+    const rows = canvas.height / box;
+    const cols = canvas.width / box;
+
+    let snake, food, goldDoor, dx, dy, interval, score, running = false;
+
+    function init() {
+      snake = [{ x: 10, y: 10 }];
+      dx = 1; dy = 0;
+      food = randomFood();
+      goldDoor = null;
+      score = 0;
+      updateScore();
+    }
+
+    function randomFood() {
+      let pos;
+      do {
+        pos = {
+          x: Math.floor(Math.random() * cols),
+          y: Math.floor(Math.random() * rows)
+        };
+      } while (snake.some(s => s.x === pos.x && s.y === pos.y));
+      return pos;
+    }
+
+    function draw() {
+      ctx.fillStyle = "#111";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#0ff";
+      snake.forEach(s => {
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#0ff";
+        ctx.fillRect(s.x * box, s.y * box, box, box);
+      });
+
+      if (food && !goldDoor) {
+        ctx.fillStyle = "#f00";
+        ctx.shadowColor = "#f00";
+        ctx.fillRect(food.x * box, food.y * box, box, box);
+      }
+
+      if (goldDoor) {
+        ctx.fillStyle = "gold";
+        ctx.shadowColor = "gold";
+        ctx.fillRect(goldDoor.x * box, goldDoor.y * box, box, box);
+      }
+    }
+
+    function update() {
+      const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+      if (
+        head.x < 0 || head.y < 0 ||
+        head.x >= cols || head.y >= rows ||
+        snake.some(s => s.x === head.x && s.y === head.y)
+      ) {
+        endGame();
+        return;
+      }
+
+      snake.unshift(head);
+
+      if (goldDoor && head.x === goldDoor.x && head.y === goldDoor.y) {
+        clearInterval(interval);
+        document.getElementById("nextLevelBtn").style.display = "block";
+        return;
+      }
+
+      if (food && head.x === food.x && head.y === food.y) {
+        score++;
+        updateScore();
+        if (score >= 30 && !goldDoor) {
+          goldDoor = randomFood();
+          food = null; // ไม่เกิดอาหารอีก
+        } else {
+          food = randomFood();
+        }
+      } else {
+        snake.pop();
+      }
+
+      draw();
+    }
+
+    function setDirection(x, y) {
+      if (!running) return;
+      if (-x === dx && -y === dy) return;
+      dx = x;
+      dy = y;
+    }
+
+    function updateScore() {
+      document.getElementById("scoreNumber").textContent = score;
+    }
+
+    function startGame() {
+      if (running) return;
+      init();
+      running = true;
+      document.getElementById("startButton").disabled = true;
+      draw();
+      interval = setInterval(update, 120);
+    }
+
+    function endGame() {
+      clearInterval(interval);
+      document.body.classList.add("flash", "shake");
+      setTimeout(() => {
+        document.body.classList.remove("flash", "shake");
+        running = false;
+        document.getElementById("startButton").disabled = false;
+        startGame(); // รีสตาร์ทใหม่
+      }, 500);
+    }
+
+    function goToNextLevel() {
+      alert("ด่าน 2 กำลังมา...");
+    }
+  </script>
+</body>
+</html>
