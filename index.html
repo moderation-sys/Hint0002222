@@ -184,7 +184,7 @@
 
   <div id="startScreen">
     <h1>เกมงู้วววววว</h1>
-    <p>บังคับงูเพื่อกินอาหารให้ครบ 30 ชิ้น แล้วกินประตูทองเพื่อไปยังด่านถัดไป!</p>
+    <p>บังคับงูเพื่อกินอาหารให้ครบ 10 ชิ้น แล้วกินประตูทองเพื่อไปยังด่านถัดไป!</p>
     <button id="startGameBtn" onclick="fadeIntoGame()">เริ่มเกม</button>
   </div>
 
@@ -287,7 +287,7 @@
       if (food && head.x === food.x && head.y === food.y) {
         score++;
         updateScore();
-        if (score >= 30 && !goldDoor) {
+        if (score >= 10 && !goldDoor) {
           goldDoor = randomFood();
           food = null; // ไม่เกิดอาหารอีก
         } else {
@@ -332,7 +332,7 @@
     }
 
     function goToNextLevel() {
-      alert("ด่าน 2 กำลังมา...");
+      window.location.href ='level2.html';
     }
   </script>
 </body>
