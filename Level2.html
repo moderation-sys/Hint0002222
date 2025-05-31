@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>เกมตบยุง + ปุ่มด่านถัดไป</title>
+<style>
+  body {
+    margin: 0; padding: 0;
+    background-color: #0a0a23;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+    color: #ccc;
+    user-select: none;
+  }
+  #gameArea {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at center, #111133 0%, #000010 80%);
+    overflow: hidden;
+  }
+  .mosquito {
+    position: absolute;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background-color: white;
+    box-shadow: 0 0 8px 2px #fff;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.1s ease;
+  }
+  .infected {
+    box-shadow:
+      0 0 12px 4px #ff0044,
+      0 0 20px 8px #ff0022;
+  }
+  #scoreboard {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    font-size: 24px;
+    color: #33ffff;
+    text-shadow: 0 0 10px #33ffff;
+  }
+  #startBtn {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #33ccff;
+    border: none;
+    padding: 20px 60px;
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    border-radius: 10px;
+    box-shadow:
+      0 0 10px #33ccff,
+      0 0 30px #33ccff;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.3s ease;
+    z-index: 1000;
+  }
+  #startBtn:hover {
+    background-color: #0099dd;
+    box-shadow:
+      0 0 20px #00aaff,
+      0 0 40px #00aaff;
+  }
+  #nextLevelBtn {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #ff0044;
+    border: none;
+    padding: 20px 60px;
+    font-size: 28px;
+    font-weight: bold;
+    color: white;
+    border-radius: 10px;
+    box-shadow:
+      0 0 10px #ff0044,
+      0 0 30px #ff0044,
+      0 0 50px #ff0044;
+    cursor: pointer;
+    user-select: none;
+    display: none;
+    z-index: 2000;
+  }
+  #nextLevelBtn:hover {
+    background-color: #cc0037;
+    box-shadow:
+      0 0 20px #ff0055,
+      0 0 40px #ff0055,
+      0 0 60px #ff0055;
+  }
+</style>
+</head>
+<body>
+
+<div id="gameArea"></div>
+<div id="scoreboard">Score: 0</div>
+<button id="startBtn">เริ่มเกม</button>
+<button id="nextLevelBtn">ด่านถัดไป</button>
+
+<script>
+  const gameArea = document.getElementById('gameArea');
+  const scoreboard = document.getElementById('scoreboard');
+  const startBtn = document.getElementById('startBtn');
+  const nextLevelBtn = document.getElementById('nextLevelBtn');
+
+  const maxMosquitoes = 5;
+  const maxInfected = 2;
+  const targetScore = 50;
+  let score = 0;
+  let mosquitoes = [];
+  let infectedCount = 0;
+  let spawnInterval = null;
+  let gameRunning = false;
+
+  function randomPosition() {
+    const padding = 50;
+    const x = Math.random() * (window.innerWidth - padding * 2) + padding;
+    const y = Math.random() * (window.innerHeight - padding * 2) + padding;
+    return { x, y };
+  }
+
+  function createMosquito(isInfected = false) {
+    const m = document.createElement('div');
+    m.classList.add('mosquito');
+    if (isInfected) {
+      m.classList.add('infected');
+    }
+    const pos = randomPosition();
+    m.style.left = pos.x + 'px';
+    m.style.top = pos.y + 'px';
+    m.dataset.infected = isInfected ? '1' : '0';
+
+    m.addEventListener('click', (e) => {
+      if (!gameRunning) return;
+      e.stopPropagation();
+      if (m.dataset.infected === '1') {
+        // ยุงติดเชื้อถูกตบ - ลบคะแนน 2 คะแนน
+        score -= 2;
+        if (score < 0) score = 0;
+      } else {
+        // ยุงปกติตบ +1 คะแนน
+        score++;
+      }
+      updateScore();
+
+      // ลบยุงที่ตบ
+      gameArea.removeChild(m);
+      mosquitoes = mosquitoes.filter(mosq => mosq !== m);
+
+      // ถ้ายุงติดเชื้อถูกตบ ลดจำนวนยุงติดเชื้อด้วย
+      if (m.dataset.infected === '1') {
+        infectedCount--;
+      }
+
+      // ถ้าผ่านเป้าหมาย 50 คะแนน
+      if (score >= targetScore) {
+        endGame();
+      }
+    });
+
+    gameArea.appendChild(m);
+    mosquitoes.push(m);
+    if (isInfected) infectedCount++;
+  }
+
+  function spawnMosquitoes() {
+    if (!gameRunning) return;
+
+    // จำนวนยุงติดเชื้อในหน้าจอไม่เกิน maxInfected
+    while (infectedCount < maxInfected) {
+      createMosquito(true);
+    }
+
+    // จำนวนยุงธรรมดาในหน้าจอไม่เกิน maxMosquitoes - maxInfected
+    while (mosquitoes.length - infectedCount < maxMosquitoes - maxInfected) {
+      createMosquito(false);
+    }
+  }
+
+  function updateScore() {
+    scoreboard.textContent = 'Score: ' + score;
+  }
+
+  function clearMosquitoes() {
+    mosquitoes.forEach(m => gameArea.removeChild(m));
+    mosquitoes = [];
+    infectedCount = 0;
+  }
+
+  function startGame() {
+    if (gameRunning) return;
+    score = 0;
+    updateScore();
+    clearMosquitoes();
+    startBtn.style.display = 'none';
+    nextLevelBtn.style.display = 'none';
+    gameRunning = true;
+
+    spawnMosquitoes();
+
+    spawnInterval = setInterval(() => {
+      if (!gameRunning) return;
+      spawnMosquitoes();
+    }, 1000);
+  }
+
+  function endGame() {
+    gameRunning = false;
+    clearInterval(spawnInterval);
+    clearMosquitoes();
+
+    nextLevelBtn.style.display = 'block';
+  }
+
+  nextLevelBtn.addEventListener('click', () => {
+    // กำหนดลิงก์ด่านถัดไปที่นี่
+    window.location.href = 'https://example.com/level3.html';
+  });
+
+  startBtn.addEventListener('click', () => {
+    startGame();
+  });
+</script>
+
+</body>
+</html>
