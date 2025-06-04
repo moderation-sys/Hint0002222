@@ -97,14 +97,14 @@
   </style>
 </head>
 <body>
-  <h1>Neon Wordle</h1>
+  <h1>เกมเดิมจากตอนที่แล้ว</h1>
   <div id="game"></div>
   <button id="check-btn">ตรวจคำตอบ</button>
   <button id="restart-btn">เริ่มใหม่</button>
   <button id="next-btn" onclick="window.location.href='level4.html'">ไปด่านถัดไป</button>
 
   <script>
-    const correctWord = atob("UEFOSUM=").toUpperCase(); // PANIC
+    const correctWord = atob("UEFOSUM=").toUpperCase();
     const game = document.getElementById("game");
     const checkBtn = document.getElementById("check-btn");
     const restartBtn = document.getElementById("restart-btn");
